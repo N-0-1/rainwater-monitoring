@@ -1,0 +1,208 @@
+/**
+ * @page PayloadCodec Payload Encoder and Decoder
+ *
+ * @brief Design and implementation of the LoRaWAN payload codec.
+ *
+ * This page describes the payload encoder and decoder used by the
+ * rain barrel monitoring application.
+ *
+ * The encoder converts application sensor values into a compact
+ * LoRaWAN payload suitable for transmission over low-bandwidth
+ * LoRaWAN networks. The decoder performs the reverse operation and
+ * reconstructs the original measurements from the received payload.
+ *
+ *
+ * @section DesignChoices Design Choices
+ *
+ * The payload codec was designed with the following objectives:
+ *
+ * - Minimize payload size to reduce airtime consumption.
+ * - Support multiple sensor types with different data sizes.
+ * - Use a single shared payload definition for both encoding and
+ *   decoding.
+ * - Simplify future expansion by adding new sensor definitions to
+ *   a central configuration table.
+ *
+ * The implementation uses the shared SensorDefinition table
+ * defined in payloaddefinitions.h. Both the encoder and decoder
+ * reference this table to guarantee a consistent payload layout.
+ *
+ * Using a shared definition reduces maintenance effort and
+ * prevents inconsistencies between transmission and reception.
+ *
+ *
+ * @section PayloadComposition Payload Composition
+ *
+ * The payload consists of three sensor values stored
+ * sequentially in the payload buffer.
+ *
+ * @code
+ * +------------+-------------+------------------+
+ * | Flow Meter | Level Meter | Battery Voltage  |
+ * +------------+-------------+------------------+
+ * | 1 byte     | 2 bytes     | 4 bytes          |
+ * +------------+-------------+------------------+
+ * @endcode
+ *
+ * Total payload size:
+ *
+ * @code
+ * 1 + 2 + 4 = 7 bytes
+ * @endcode
+ *
+ * The field order is determined by the SensorDefinition table:
+ *
+ * @code
+ * FLOW_METER      -> uint8_t
+ * LEVEL_METER     -> uint16_t
+ * BATTERY_VOLTAGE -> uint32_t
+ * @endcode
+ *
+ * Example payload:
+ *
+ * @code
+ * Flow Meter      = 25
+ * Level Meter     = 120 cm
+ * Battery Voltage = 398 cV
+ *
+ * Encoded payload:
+ *
+ * +------+------+------+------+------+------+
+ * | 19   | 00   | 78   | 00   | 00   | 01   | 8E
+ * +------+------+------+------+------+------+
+ *
+ * @endcode
+ *
+ *
+ * @section EncoderOperation Encoder Operation
+ *
+ * The encoding process consists of:
+ *
+ * 1. Store sensor values using setSensorValue().
+ * 2. Call composePayload().
+ * 3. Iterate through the SensorDefinition table.
+ * 4. Convert each measurement to its byte representation.
+ * 5. Store the bytes in the payload buffer.
+ * 6. Return the completed payload.
+ *
+ *
+ * @dot
+ * digraph EncoderFlow
+ * {
+ *   rankdir=TB;
+ *
+ *   Values [label="Sensor Values"];
+ *   Compose [label="composePayload()"];
+ *   Table [label="SensorDefinition Table"];
+ *   Encode [label="add_uint8()\nadd_uint16()\nadd_uint32()"];
+ *   Payload [label="LoRaWAN Payload"];
+ *
+ *   Values -> Compose;
+ *   Compose -> Table;
+ *   Table -> Encode;
+ *   Encode -> Payload;
+ * }
+ * @enddot
+ *
+ *
+ * @section DecoderOperation Decoder Operation
+ *
+ * The decoder reconstructs the original measurements from the
+ * received payload.
+ *
+ * The decoding process consists of:
+ *
+ * 1. Store payload pointer.
+ * 2. Store payload size.
+ * 3. Call decodePayload().
+ * 4. Iterate through the SensorDefinition table.
+ * 5. Extract values from the payload buffer.
+ * 6. Store values internally.
+ * 7. Retrieve values using getSensorValue().
+ *
+ *
+ * @dot
+ * digraph DecoderFlow
+ * {
+ *   rankdir=TB;
+ *
+ *   Payload [label="LoRaWAN Payload"];
+ *   Decode [label="decodePayload()"];
+ *   Table [label="SensorDefinition Table"];
+ *   Extract [label="extract_uint8()\nextract_uint16()\nextract_uint32()"];
+ *   Values [label="Decoded Sensor Values"];
+ *
+ *   Payload -> Decode;
+ *   Decode -> Table;
+ *   Table -> Extract;
+ *   Extract -> Values;
+ * }
+ * @enddot
+ *
+ *
+ * @section ClassDiagram Class Diagram
+ *
+ * @startuml
+ *
+ * title Payload Codec Class Diagram
+ *
+ * class myPayloadEncoder {
+ *   -_sensorValues[]
+ *  -_buffer
+ *   -_bufferSize
+ *
+ *  +setSensorValue()
+ *   +composePayload()
+ *  +getPayload()
+ *   +getPayloadSize()
+ * }
+ *
+ * class myPayloadDecoder {
+ *   -_sensorValues[]
+ *  -_buffer
+ *   -_bufferSize
+ *
+ *  +setPayload()
+ *   +setPayloadSize()
+ *  +decodePayload()
+ *   +getSensorValue()
+ * }
+ *
+ * class SensorDefinition <<struct>> {
+ *   +size
+ *   +name
+ * }
+ *
+ * enum SensorId {
+ *   FLOW_METER
+ *   LEVEL_METER
+ *   BATTERY_VOLTAGE
+ * }
+ *
+ * myPayloadEncoder ..> SensorDefinition
+ * myPayloadDecoder ..> SensorDefinition
+ *
+ * myPayloadEncoder ..> SensorId
+ * myPayloadDecoder ..> SensorId
+ *
+ * myPayloadEncoder --> myPayloadDecoder : payload
+ *
+ * @enduml
+ *
+ *
+ * @section Summary Summary
+ *
+ * The payload codec subsystem provides a compact and reusable
+ * mechanism for transferring sensor values through LoRaWAN.
+ *
+ * The encoder and decoder share a common payload definition,
+ * ensuring that transmitted and received data remain consistent.
+ *
+ * The current implementation supports:
+ *
+ * - Flow Meter (1 byte)
+ * - Level Meter (2 bytes)
+ * - Battery Voltage (4 bytes)
+ *
+ * resulting in a total payload size of 7 bytes.
+ */
