@@ -1,0 +1,215 @@
+[
+    {
+        "id": "fd888e3763e5de9d",
+        "type": "tab",
+        "label": "Regentonmeter-node_Node-RED",
+        "disabled": false,
+        "info": "Managing the data from iot_node to mariadb_database/Node-RED_dashboard",
+        "env": []
+    },
+    {
+        "id": "4a7874e8.6d730c",
+        "type": "mqtt in",
+        "z": "fd888e3763e5de9d",
+        "name": "first-app-0",
+        "topic": "v3/it-test@ttn/devices/+/up",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "98dc32bf.a043a8",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 280,
+        "y": 240,
+        "wires": [
+            [
+                "f7aa5254.d51d5"
+            ]
+        ],
+        "info": "NNSXS.CVAFCXNWNWINURQ7VNQXYVMYBHI2FWYWUYKSBAQ.34B7W5MOTHPI6VREUYN35KDF3EP62E2DD2ZE4GRQA7TJREPIESPQ"
+    },
+    {
+        "id": "f7aa5254.d51d5",
+        "type": "function",
+        "z": "fd888e3763e5de9d",
+        "name": "Unifier TTNV3",
+        "func": "var unified = {};\nunified.source = \"TTNV3\";\n\n\nif('join_accept' in msg.payload){\n    return;\n}\n\n// unified.dateTime = msg.collectedTime;\nvar tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds\nvar dateTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 19).replace('T', ' ');\nunified.dateTime = dateTime;\n\nunified.devID = msg.payload.end_device_ids.device_id;\nunified.appEUI = msg.payload.end_device_ids.join_eui;\nunified.devEUI = msg.payload.end_device_ids.dev_eui;\nunified.appID = msg.payload.end_device_ids.application_ids.application_id;\nif(typeof msg.payload.uplink_message.f_cnt !== 'undefined') {\n    unified.fcnt = msg.payload.uplink_message.f_cnt\n}else{\n    unified.fcnt = 0;\n}\n\nunified.port = msg.payload.uplink_message.f_port;\nunified.devAddr = msg.payload.end_device_ids.dev_addr;\nunified.frequency = parseInt(msg.payload.uplink_message.settings.frequency)/1000000;\n\nunified.sf = msg.payload.uplink_message.settings.data_rate.lora.spreading_factor\n// unified.sf = \"\";\n\nunified.payload = {};\nunified.payload.buffer = Buffer.from(msg.payload.uplink_message.frm_payload, 'base64');\nunified.payload.size = Buffer.byteLength(msg.payload.uplink_message.frm_payload);\nunified.payload.base64 = msg.payload.uplink_message.frm_payload;\nunified.payload.decoded = {};\nunified.payload.decoded = msg.payload.uplink_message.decoded_payload;\n\nunified.metaData = {};\nunified.metaData.gatewayCount = msg.payload.uplink_message.rx_metadata.length;\nunified.metaData.gateways = [];\nfor (var i=0 ; i < unified.metaData.gatewayCount ; i++) {\n    var data = {};\n    data.name = msg.payload.uplink_message.rx_metadata[i].gateway_ids.gateway_id;\n    \n    if(typeof msg.payload.uplink_message.rx_metadata[i].gateway_ids.eui !== 'undefined') {\n        data.id = msg.payload.uplink_message.rx_metadata[i].gateway_ids.eui;\n    } else {\n        data.id = 0;\n    }\n    \n    data.rssi = msg.payload.uplink_message.rx_metadata[i].rssi;\n    data.snr = msg.payload.uplink_message.rx_metadata[i].snr;\n    \n    if(typeof msg.payload.uplink_message.rx_metadata[i].location !== 'undefined') {\n        data.lat = msg.payload.uplink_message.rx_metadata[i].location.latitude;\n        data.lon = msg.payload.uplink_message.rx_metadata[i].location.longitude;\n        data.height = msg.payload.uplink_message.rx_metadata[i].location.altitude;\n    } else {\n        data.lat = 0;\n        data.lon = 0;\n        data.height = 0;\n    }\n    \n    unified.metaData.gateways.push(data);\n}\n\nreturn unified;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 240,
+        "wires": [
+            [
+                "6e8fa3e82db867eb",
+                "3f5b634bc8e14ff4"
+            ]
+        ],
+        "inputLabels": [
+            "Helium"
+        ],
+        "outputLabels": [
+            "Unified"
+        ],
+        "icon": "font-awesome/fa-arrows-alt"
+    },
+    {
+        "id": "a23ecfcb668135e3",
+        "type": "mysql",
+        "z": "fd888e3763e5de9d",
+        "mydb": "3f952748414dd761",
+        "name": "raintankNetwork",
+        "x": 1220,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6e8fa3e82db867eb",
+        "type": "debug",
+        "z": "fd888e3763e5de9d",
+        "name": "msg",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 610,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "d8ee1e0929a2051f",
+        "type": "template",
+        "z": "fd888e3763e5de9d",
+        "name": "MYSQL insert to my database",
+        "field": "topic",
+        "fieldType": "msg",
+        "format": "sql",
+        "syntax": "mustache",
+        "template": "INSERT INTO device\n(\n    device_id,\n    device_eui\n)\nVALUES\n(\n    \"{{payload.devID}}\",\n    \"{{payload.devEUI}}\"\n)\nON DUPLICATE KEY UPDATE\ndevice_id = VALUES(device_id);\n\nINSERT INTO measurement\n(\n    device_id,\n    uplink_at,\n    battery_voltage_cv,\n    flow_volume_ml,\n    level_cm\n)\nSELECT\n    id,\n    \"{{payload.datetime}}\",\n    {{payload.batteryVoltage}},\n    {{payload.flowMeter}},\n    {{payload.levelMeter}}\nFROM device\nWHERE device_eui = \"{{payload.devEUI}}\";\n",
+        "output": "str",
+        "x": 950,
+        "y": 180,
+        "wires": [
+            [
+                "a23ecfcb668135e3"
+            ]
+        ]
+    },
+    {
+        "id": "3f5b634bc8e14ff4",
+        "type": "function",
+        "z": "fd888e3763e5de9d",
+        "name": "Pre Process",
+        "func": "//var device = msg.devID;\nvar device = msg.appID;\nvar deviceType = 0;\n\n// check to prevent payloads from processing that are empty.\nif (typeof msg.payload.decoded === 'undefined') {\n    return;\n}\n\n// Process available payload topics\nif (typeof msg.payload.decoded.flowMeter !== 'undefined') {\n    msg.payload.flowMeter = msg.payload.decoded.flowMeter;\n}\n\nif (typeof msg.payload.decoded.batteryVoltage !== 'undefined') {\n    msg.payload.batteryVoltage = msg.payload.decoded.batteryVoltage;\n}\n\nif (typeof msg.payload.decoded.levelMeter !== 'undefined') {\n    msg.payload.levelMeter = msg.payload.decoded.levelMeter;\n}\n\nmsg.payload.database = \"RaintankNetwork\";\n\nconst d = new Date();\nd.setMinutes(d.getMinutes() - d.getTimezoneOffset());\n\nmsg.payload.datetime = d\n    .toISOString()\n    .slice(0, 19)\n    .replace('T', ' ');\n\nmsg.payload.devID = msg.devID;\nmsg.payload.devEUI = msg.devEUI;\n\n// --------------------------------------------------\n// LoRaWAN radio metadata\n// --------------------------------------------------\n\nif (typeof msg.metaData !== 'undefined') {\n\nmsg.payload.gatewayCount = msg.metaData.gatewayCount || 0;\n\n    if (msg.metaData &&\n        msg.metaData.gateways) {\n\n        msg.gatewayCount =\n            msg.metaData.gatewayCount;\n\n        msg.payload.radioMetadata =\n            msg.metaData.gateways.map(gw => ({\n                gateway_name: gw.name,\n                gateway_eui: gw.id,\n                rssi: gw.rssi,\n                snr: gw.snr,\n                latitude: gw.lat,\n                longitude: gw.lon,\n                height: gw.height\n            }));\n    }\n\n    return msg;\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 240,
+        "wires": [
+            [
+                "0e594a92cd09dc9b",
+                "d8ee1e0929a2051f"
+            ]
+        ]
+    },
+    {
+        "id": "0e594a92cd09dc9b",
+        "type": "function",
+        "z": "fd888e3763e5de9d",
+        "name": "Gateways",
+        "func": "let queries = [];\n\nfor (const gw of msg.payload.radioMetadata) {\n\n    queries.push(`\n        INSERT INTO radio_metadata\n        (\n            measurement_id,\n            gateway_name,\n            gateway_eui,\n            rssi,\n            snr,\n            latitude,\n            longitude,\n            height\n        )\n        SELECT\n            m.id,\n            '${gw.gateway_name}',\n            '${gw.gateway_eui}',\n            ${gw.rssi},\n            ${gw.snr},\n            ${gw.latitude},\n            ${gw.longitude},\n            ${gw.height}\n        FROM measurement m\n        JOIN device d\n            ON d.id = m.device_id\n        WHERE d.device_eui = '${msg.payload.devEUI}'\n        ORDER BY m.id DESC\n        LIMIT 1;\n    `);\n}\n\nmsg.topic = queries.join(\"\\n\");\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 300,
+        "wires": [
+            [
+                "72c9ab7c1749c757"
+            ]
+        ]
+    },
+    {
+        "id": "72c9ab7c1749c757",
+        "type": "template",
+        "z": "fd888e3763e5de9d",
+        "name": "Radio Metadata",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "sql",
+        "syntax": "mustache",
+        "template": "INSERT INTO radio_metadata\n(\n    measurement_id,\n    gateway_name,\n    gateway_eui,\n    rssi,\n    snr,\n    latitude,\n    longitude,\n    height\n)\nSELECT\n    m.id,\n    \"{{payload.gatewayName}}\",\n    \"{{payload.gatewayEUI}}\",\n    {{payload.rssi}},\n    {{payload.snr}},\n    {{payload.latitude}},\n    {{payload.longitude}},\n    {{payload.height}}\nFROM measurement m\nJOIN device d\n  ON d.id = m.device_id\nWHERE d.device_eui = \"{{payload.devEUI}}\"\nORDER BY m.id DESC\nLIMIT 1;",
+        "output": "str",
+        "x": 1020,
+        "y": 300,
+        "wires": [
+            [
+                "a23ecfcb668135e3"
+            ]
+        ]
+    },
+    {
+        "id": "98dc32bf.a043a8",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "eu1.cloud.thethings.network",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "compatmode": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": "",
+        "info": "han-demo-test-application@ttn\neu1.cloud.thethings.network:1883\nNNSXS.I6YGDQTOPJ2TI4JU2FB63IDSWDG5EDXLS7RONBQ.IHBQ4LV5RZJAI4AQ5NL33NWFEHQO7ZSFOEF2D2FK4SKTCF3QEKSQ"
+    },
+    {
+        "id": "3f952748414dd761",
+        "type": "MySQLdatabase",
+        "name": "raintankNetwork",
+        "host": "127.0.0.1",
+        "port": "3306",
+        "db": "raintankNetwork",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "9c0d2b8e6c982a55",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-mysql": "2.0.0"
+        }
+    }
+]

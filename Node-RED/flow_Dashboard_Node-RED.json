@@ -1,0 +1,507 @@
+[
+    {
+        "id": "c3720fe9e31dc918",
+        "type": "tab",
+        "label": "Regentonmeter-Dashboard_Node-RED",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "baded7ebe5714530",
+        "type": "mqtt in",
+        "z": "c3720fe9e31dc918",
+        "name": "first-app-0",
+        "topic": "v3/it-test@ttn/devices/+/up",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "98dc32bf.a043a8",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 280,
+        "y": 380,
+        "wires": [
+            [
+                "726d44dbc0f0c727"
+            ]
+        ],
+        "info": "NNSXS.CVAFCXNWNWINURQ7VNQXYVMYBHI2FWYWUYKSBAQ.34B7W5MOTHPI6VREUYN35KDF3EP62E2DD2ZE4GRQA7TJREPIESPQ"
+    },
+    {
+        "id": "726d44dbc0f0c727",
+        "type": "function",
+        "z": "c3720fe9e31dc918",
+        "name": "Unifier TTNV3",
+        "func": "var unified = {};\nunified.source = \"TTNV3\";\n\n\nif('join_accept' in msg.payload){\n    return;\n}\n\n// unified.dateTime = msg.collectedTime;\nvar tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds\nvar dateTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 19).replace('T', ' ');\nunified.dateTime = dateTime;\n\nunified.devID = msg.payload.end_device_ids.device_id;\nunified.appEUI = msg.payload.end_device_ids.join_eui;\nunified.devEUI = msg.payload.end_device_ids.dev_eui;\nunified.appID = msg.payload.end_device_ids.application_ids.application_id;\nif(typeof msg.payload.uplink_message.f_cnt !== 'undefined') {\n    unified.fcnt = msg.payload.uplink_message.f_cnt\n}else{\n    unified.fcnt = 0;\n}\n\nunified.port = msg.payload.uplink_message.f_port;\nunified.devAddr = msg.payload.end_device_ids.dev_addr;\nunified.frequency = parseInt(msg.payload.uplink_message.settings.frequency)/1000000;\n\nunified.sf = msg.payload.uplink_message.settings.data_rate.lora.spreading_factor\n// unified.sf = \"\";\n\nunified.payload = {};\nunified.payload.buffer = Buffer.from(msg.payload.uplink_message.frm_payload, 'base64');\nunified.payload.size = Buffer.byteLength(msg.payload.uplink_message.frm_payload);\nunified.payload.base64 = msg.payload.uplink_message.frm_payload;\nunified.payload.decoded = {};\nunified.payload.decoded = msg.payload.uplink_message.decoded_payload;\n\nunified.metaData = {};\nunified.metaData.gatewayCount = msg.payload.uplink_message.rx_metadata.length;\nunified.metaData.gateways = [];\nfor (var i=0 ; i < unified.metaData.gatewayCount ; i++) {\n    var data = {};\n    data.name = msg.payload.uplink_message.rx_metadata[i].gateway_ids.gateway_id;\n    \n    if(typeof msg.payload.uplink_message.rx_metadata[i].gateway_ids.eui !== 'undefined') {\n        data.id = msg.payload.uplink_message.rx_metadata[i].gateway_ids.eui;\n    } else {\n        data.id = 0;\n    }\n    \n    data.rssi = msg.payload.uplink_message.rx_metadata[i].rssi;\n    data.snr = msg.payload.uplink_message.rx_metadata[i].snr;\n    \n    if(typeof msg.payload.uplink_message.rx_metadata[i].location !== 'undefined') {\n        data.lat = msg.payload.uplink_message.rx_metadata[i].location.latitude;\n        data.lon = msg.payload.uplink_message.rx_metadata[i].location.longitude;\n        data.height = msg.payload.uplink_message.rx_metadata[i].location.altitude;\n    } else {\n        data.lat = 0;\n        data.lon = 0;\n        data.height = 0;\n    }\n    \n    unified.metaData.gateways.push(data);\n}\n\nreturn unified;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 380,
+        "wires": [
+            [
+                "0ebb5279a1f7df05"
+            ]
+        ],
+        "inputLabels": [
+            "Helium"
+        ],
+        "outputLabels": [
+            "Unified"
+        ],
+        "icon": "font-awesome/fa-arrows-alt"
+    },
+    {
+        "id": "0ebb5279a1f7df05",
+        "type": "function",
+        "z": "c3720fe9e31dc918",
+        "name": "first-app-0",
+        "func": "\nvar update = false;\nvar msg1 = {};\n\nif (msg.appID !== \"it-test\"){\n    return;\n}\n\nif(typeof msg.payload.decoded.batteryVoltage !== 'undefined') {\n\n    msg1.payload = msg.payload.decoded.batteryVoltage;\n    node.send([[null], [null], [null], [null], [msg1]]);\n    update = true;\n}\n\nif(typeof msg.payload.decoded.flowMeter !== 'undefined') {\n  \n    msg1.payload = msg.payload.decoded.flowMeter;\n    node.send([[null], [null], [null], [msg1],[null]]);\n    update = true;\n}\n\nif(typeof msg.payload.decoded.levelMeter !== 'undefined') {\n\n    msg1.payload = msg.payload.decoded.levelMeter;\n    node.send([[null],[null],[msg1],[null],[null]]);\n    update = true;\n}\n\nif(update){\n\n    msg1.payload = msg.devID;\n    node.send([[null], [msg1],[null],[null],[null]]);\n}\nif(update){\n    msg1.payload = msg.dateTime.substr(0, 16);  \n    node.send([[msg1], [null],[null],[null],[null]]);\n}\n\n    ",
+        "outputs": 5,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 740,
+        "y": 380,
+        "wires": [
+            [
+                "3fb7d88d389428d1"
+            ],
+            [
+                "f4a0f2b097f958ad"
+            ],
+            [
+                "8c5f0b78621b1b72"
+            ],
+            [
+                "b733c9ab4f850691"
+            ],
+            [
+                "753f8838c9435319"
+            ]
+        ]
+    },
+    {
+        "id": "b733c9ab4f850691",
+        "type": "ui_gauge",
+        "z": "c3720fe9e31dc918",
+        "name": "Flow (mL)",
+        "group": "134f5e01c8e31494",
+        "order": 4,
+        "width": 6,
+        "height": "6",
+        "gtype": "gage",
+        "title": "Flow (mL)",
+        "label": "mL",
+        "format": "{{value}}",
+        "min": "0",
+        "max": "100",
+        "colors": [
+            "#0006b3",
+            "#b400e6",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 980,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "f4a0f2b097f958ad",
+        "type": "ui_text",
+        "z": "c3720fe9e31dc918",
+        "group": "134f5e01c8e31494",
+        "order": 1,
+        "width": 6,
+        "height": 2,
+        "name": "Device Name",
+        "label": "Device's name",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 1000,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "3fb7d88d389428d1",
+        "type": "ui_text",
+        "z": "c3720fe9e31dc918",
+        "group": "134f5e01c8e31494",
+        "order": 2,
+        "width": 6,
+        "height": 2,
+        "name": "Last updated",
+        "label": "Last updated",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 990,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "753f8838c9435319",
+        "type": "ui_gauge",
+        "z": "c3720fe9e31dc918",
+        "name": "Battery (CV)",
+        "group": "134f5e01c8e31494",
+        "order": 5,
+        "width": 6,
+        "height": "6",
+        "gtype": "gage",
+        "title": "Battery (CV)",
+        "label": "CV",
+        "format": "{{value}}",
+        "min": "0",
+        "max": "500",
+        "colors": [
+            "#b32d00",
+            "#00e6cb",
+            "#3acb3c"
+        ],
+        "seg1": "450",
+        "seg2": "480",
+        "diff": false,
+        "className": "",
+        "x": 990,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "8c5f0b78621b1b72",
+        "type": "ui_level",
+        "z": "c3720fe9e31dc918",
+        "group": "134f5e01c8e31494",
+        "order": 3,
+        "width": "6",
+        "height": "4",
+        "name": "Level (CM)",
+        "label": "Level",
+        "colorHi": "#e60000",
+        "colorWarn": "#ff9900",
+        "colorNormal": "#00b33c",
+        "colorOff": "#595959",
+        "min": 0,
+        "max": "150",
+        "segWarn": "120",
+        "segHigh": "140",
+        "unit": "cm",
+        "layout": "sv",
+        "channelA": "",
+        "channelB": "",
+        "decimals": 0,
+        "animations": "off",
+        "shape": "3",
+        "colorschema": "fixed",
+        "textoptions": "custom",
+        "colorText": "#eeeeee",
+        "fontLabel": "1.2",
+        "fontValue": "1.4",
+        "fontSmall": "1.2",
+        "colorFromTheme": true,
+        "textAnimations": false,
+        "hideValue": false,
+        "tickmode": "off",
+        "peakmode": false,
+        "property": "payload",
+        "peaktime": 3000,
+        "x": 990,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "7687f71fed3552c7",
+        "type": "function",
+        "z": "c3720fe9e31dc918",
+        "name": "Process weather's data",
+        "func": "let current = msg.payload[0];\n\nmsg.payload = {\n    temp: current.main.temp,\n   // feels_like: current.main.feels_like,\n   // humidity: current.main.humidity,\n    description: current.weather[0].description,\n    rain: current.rain ? current.rain[\"3h\"] : 0,\n    pop: current.pop,\n    time: current.dt_txt\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 620,
+        "wires": [
+            [
+                "6d64db48f10c2d2e",
+                "df3a623359301db1"
+            ]
+        ]
+    },
+    {
+        "id": "6d64db48f10c2d2e",
+        "type": "ui_text",
+        "z": "c3720fe9e31dc918",
+        "group": "91d11bd6d4287790",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Temperature",
+        "format": "{{msg.payload.temp}} °C",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 710,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "df3a623359301db1",
+        "type": "ui_text",
+        "z": "c3720fe9e31dc918",
+        "group": "91d11bd6d4287790",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Weather",
+        "format": "{{msg.payload.description}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 700,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "dbcd2be281873422",
+        "type": "ui_text",
+        "z": "c3720fe9e31dc918",
+        "group": "91d11bd6d4287790",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Next 24h Rain",
+        "format": "{{msg.payload.total24h}} mm",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 720,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "3f3304e59bee28ef",
+        "type": "function",
+        "z": "c3720fe9e31dc918",
+        "name": "Process rain's data",
+        "func": "let totalRain = 0;\nlet firstRainTime = \"\";\nlet maxRain = 0;\n\n// 24h = 8 forecast blocks\nfor (let i = 0; i < 8 && i < msg.payload.length; i++) {\n\n    let item = msg.payload[i];\n\n    if (item.rain && item.rain[\"3h\"]) {\n\n        let rainAmount = item.rain[\"3h\"];\n\n        totalRain += rainAmount;\n\n        if (!firstRainTime) {\n            firstRainTime = new Date(item.dt_txt).toLocaleString();\n        }\n\n        if (rainAmount > maxRain) {\n            maxRain = rainAmount;\n        }\n    }\n}\n\ntotalRain = Math.round(totalRain * 100) / 100;\n\nmsg.payload = {\n    total24h: totalRain,\n    firstRain: firstRainTime,\n    max3h: maxRain\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 720,
+        "wires": [
+            [
+                "dbcd2be281873422",
+                "cd7746cf13f5608c"
+            ]
+        ]
+    },
+    {
+        "id": "6d9cbcecff0a09fc",
+        "type": "ui_toast",
+        "z": "c3720fe9e31dc918",
+        "position": "top right",
+        "displayTime": "20",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "className": "",
+        "topic": "Rain Alert",
+        "name": "Rain Notification",
+        "x": 1000,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "116e06f0032e149c",
+        "type": "function",
+        "z": "c3720fe9e31dc918",
+        "name": "Alert message",
+        "func": "let data = msg.payload;\n\nmsg.payload = `\n🌧 Rain expected!\n\nTotal next 24h: ${data.total24h} mm\nFirst rain at: ${data.firstRain}\nMax in 3h: ${data.max3h} mm\n`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 800,
+        "y": 780,
+        "wires": [
+            [
+                "6d9cbcecff0a09fc"
+            ]
+        ]
+    },
+    {
+        "id": "cd7746cf13f5608c",
+        "type": "switch",
+        "z": "c3720fe9e31dc918",
+        "name": "",
+        "property": "payload.total24h",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gte",
+                "v": "1",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 630,
+        "y": 780,
+        "wires": [
+            [
+                "116e06f0032e149c"
+            ]
+        ]
+    },
+    {
+        "id": "50f5df4b883d765c",
+        "type": "openweathermap in",
+        "z": "c3720fe9e31dc918",
+        "name": "Apeldoorn",
+        "wtype": "forecast",
+        "lon": "",
+        "lat": "",
+        "city": "Apeldoorn",
+        "country": "Netherlands",
+        "language": "en",
+        "x": 280,
+        "y": 620,
+        "wires": [
+            [
+                "7687f71fed3552c7",
+                "3f3304e59bee28ef",
+                "7281e96844d20e65"
+            ]
+        ]
+    },
+    {
+        "id": "7281e96844d20e65",
+        "type": "debug",
+        "z": "c3720fe9e31dc918",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 440,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "98dc32bf.a043a8",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "eu1.cloud.thethings.network",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "compatmode": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": "",
+        "info": "han-demo-test-application@ttn\neu1.cloud.thethings.network:1883\nNNSXS.I6YGDQTOPJ2TI4JU2FB63IDSWDG5EDXLS7RONBQ.IHBQ4LV5RZJAI4AQ5NL33NWFEHQO7ZSFOEF2D2FK4SKTCF3QEKSQ"
+    },
+    {
+        "id": "134f5e01c8e31494",
+        "type": "ui_group",
+        "name": "measurement",
+        "tab": "ui_tab_raintank",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "91d11bd6d4287790",
+        "type": "ui_group",
+        "name": "Weather",
+        "tab": "ui_tab_raintank",
+        "order": 3,
+        "disp": true,
+        "width": 6,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "ui_tab_raintank",
+        "type": "ui_tab",
+        "name": "RainTank",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "811e54b636005611",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-dashboard": "3.6.6",
+            "node-red-contrib-ui-level": "0.1.46",
+            "node-red-node-openweathermap": "1.0.1"
+        }
+    }
+]
