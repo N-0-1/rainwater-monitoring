@@ -1,0 +1,172 @@
+/**
+ * @page GrafanaDashboard Grafana Dashboard Configuration
+ *
+ * @brief Grafana dashboards used to visualize rainwater monitoring data.
+ *
+ * Grafana is connected to the MariaDB database
+ * @code
+ * raintankNetwork
+ * @endcode
+ *
+ * and is used to display historical measurements and LoRaWAN
+ * communication statistics.
+ *
+ *
+ * @section DataSource Data Source
+ *
+ * Type:
+ * @code
+ * MySQL / MariaDB
+ * @endcode
+ *
+ * Database:
+ * @code
+ * raintankNetwork
+ * @endcode
+ *
+ * Time column:
+ * @code
+ * uplink_at
+ * @endcode
+ *
+ *
+ * @section WaterLevelDashboard Water Level Dashboard
+ *
+ * Purpose:
+ * Monitor the amount of water stored in the rain barrel over time.
+ *
+ * Visualization:
+ * @code
+ * Time Series
+ * @endcode
+ *
+ * Query:
+ * @code
+ * SELECT
+ *     uplink_at AS time,
+ *     level_cm AS value
+ * FROM measurement
+ * ORDER BY uplink_at;
+ * @endcode
+ *
+ * Settings:
+ * - Title: Water Level
+ * - Unit: centimeters (cm)
+ * - Legend: Water Level
+ *
+ *
+ * @section FlowMeterDashboard Water Consumption Dashboard
+ *
+ * Purpose:
+ * Monitor water consumption from the rain barrel.
+ *
+ * Visualization:
+ * @code
+ * Time Series
+ * @endcode
+ *
+ * Query:
+ * @code
+ * SELECT
+ *     uplink_at AS time,
+ *     flow_volume_ml AS value
+ * FROM measurement
+ * ORDER BY uplink_at;
+ * @endcode
+ *
+ * Settings:
+ * - Title: Water Consumption
+ * - Unit: milliliters (mL)
+ * - Legend: Flow Meter
+ *
+ *
+ * @section BatteryDashboard Battery Voltage Dashboard
+ *
+ * Purpose:
+ * Monitor the energy status of the LoRaWAN node.
+ *
+ * Visualization:
+ * @code
+ * Time Series
+ * @endcode
+ *
+ * Query:
+ * @code
+ * SELECT
+ *     uplink_at AS time,
+ *     battery_voltage_cv / 100 AS value
+ * FROM measurement
+ * ORDER BY uplink_at;
+ * @endcode
+ *
+ * Settings:
+ * - Title: Battery Voltage
+ * - Unit: volts (V)
+ * - Legend: Battery Voltage
+ * - Display decimals: 2
+ *
+ *
+ * @section RSSIDashboard RSSI Dashboard
+ *
+ * Purpose:
+ * Monitor the received signal strength of LoRaWAN uplinks.
+ *
+ * Visualization:
+ * @code
+ * Time Series
+ * @endcode
+ *
+ * Query:
+ * @code
+ * SELECT
+ *     m.uplink_at AS time,
+ *     r.rssi AS value
+ * FROM radio_metadata r
+ * JOIN measurement m
+ *     ON m.id = r.measurement_id
+ * ORDER BY m.uplink_at;
+ * @endcode
+ *
+ * Settings:
+ * - Title: RSSI
+ * - Unit: dBm
+ * - Legend: RSSI
+ * - Threshold:
+ *   - Green : > -80 dBm
+ *   - Yellow: -100 dBm
+ *   - Red   : < -110 dBm
+ *
+ *
+ * @section SNRDashboard SNR Dashboard
+ *
+ * Purpose:
+ * Monitor LoRaWAN signal quality.
+ *
+ * Visualization:
+ * @code
+ * Time Series
+ * @endcode
+ *
+ * Query:
+ * @code
+ * SELECT
+ *     m.uplink_at AS time,
+ *     r.snr AS value
+ * FROM radio_metadata r
+ * JOIN measurement m
+ *     ON m.id = r.measurement_id
+ * ORDER BY m.uplink_at;
+ * @endcode
+ *
+ * Settings:
+ * - Title: Signal-to-Noise Ratio
+ * - Unit: dB
+ * - Legend: SNR
+ * - Min: -20
+ * - Max: 20
+ *
+ *
+ *
+ * @see DatabaseDesign
+ * @see ApplicationArchitecture
+ */
