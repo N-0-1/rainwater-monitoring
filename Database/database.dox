@@ -1,0 +1,143 @@
+/**
+ * @page DatabaseDesign Database Design
+ *
+ * @brief Database structure for storing rainwater monitoring data.
+ *
+ * The database stores sensor measurements received from LoRaWAN
+ * nodes installed at rainwater buffering locations. In addition
+ * to sensor values, radio communication metadata is stored to
+ * evaluate the quality of the LoRaWAN connection.
+ *
+ *
+ * @section DesignChoices Design Choices
+ *
+ * The following design choices were made during the database design:
+ *
+ * - Device information, sensor measurements and radio metadata
+ *   are stored in separate tables.
+ *
+ * - Each device is assigned a unique internal identifier that
+ *   serves as the primary key.
+ *
+ * - The Device EUI is stored separately and uniquely identifies
+ *   each LoRaWAN node.
+ *
+ * - Measurements are linked to devices through a foreign key,
+ *   establishing a one-to-many relationship.
+ *
+ * - Radio metadata is linked to individual measurements through
+ *   a foreign key, allowing information from one or more gateways
+ *   to be stored for a single uplink.
+ *
+ * - Timestamps are stored with each measurement to support
+ *   historical analysis and trend monitoring.
+ *
+ * - Indexes are used on device identifiers and timestamps to
+ *   improve query performance.
+ *
+ * - Cascading deletion is enabled to ensure that removing a
+ *   device automatically removes all associated measurements
+ *   and radio metadata.
+ *
+ *
+ * @section EntityDescription Entity Description
+ *
+ * Device
+ * - Stores information about a LoRaWAN node.
+ * - Contains the Device ID, Device EUI and installation location.
+ *
+ * Measurement
+ * - Stores sensor readings received from a device.
+ * - Records battery voltage, water level and flow volume.
+ * - Stores the timestamp of the received uplink.
+ *
+ * RadioMetadata
+ * - Stores LoRaWAN reception information.
+ * - Records the receiving gateway.
+ * - Stores RSSI and SNR values used to assess radio link quality.
+ * - Optionally stores gateway location information.
+ *
+ *
+ * @section UMLDiagram Database UML Diagram
+ *
+ * @startuml
+ *
+ * class Device {
+ *     <<table>>
+ *     +PK id : int
+ *     +device_id : char(16)
+ *     +device_eui : char(16) {unique}
+ *     +location : varchar(100)
+ * }
+ *
+ * class Measurement {
+ *     <<table>>
+ *     +PK id : bigint
+ *     +FK device_id : int
+ *     +uplink_at : datetime
+ *     +battery_voltage_cv : decimal(8,3)
+ *     +flow_volume_ml : decimal(12,3)
+ *     +level_cm : decimal(12,3)
+ * }
+ *
+ * class RadioMetadata {
+ *     <<table>>
+ *     +PK id : bigint
+ *     +FK measurement_id : bigint
+ *     +gateway_name : varchar(100)
+ *     +gateway_eui : char(16)
+ *     +rssi : int
+ *     +snr : decimal(5,2)
+ *     +latitude : decimal(10,7)
+ *     +longitude : decimal(10,7)
+ *     +height : decimal(8,2)
+ * }
+ *
+ * Device "1" -- "0..*" Measurement : generates
+ * Measurement "1" -- "0..*" RadioMetadata : received by
+ *
+ * @enduml
+ *
+ *
+ * @section Relationship Relationship Between Tables
+ *
+ * The database models the LoRaWAN monitoring network using two
+ * one-to-many relationships:
+ *
+ * @verbatim
+ *
+ * Device (1) ----------- (*) Measurement
+ *                            |
+ *                            |
+ *                            +------ (*) RadioMetadata
+ *
+ * @endverbatim
+ *
+ * A device generates many measurements over time. Each
+ * measurement may be received by one or more gateways,
+ * resulting in one or more radio metadata records.
+ *
+ *
+ * @section StoredData Stored Data
+ *
+ * The database stores the following information:
+ *
+ * - Device identification.
+ * - Device installation location.
+ * - Measurement timestamp.
+ * - Battery voltage (cV).
+ * - Water level (cm).
+ * - Flow volume (mL).
+ * - Gateway identifier.
+ * - Gateway name.
+ * - RSSI (Received Signal Strength Indicator).
+ * - SNR (Signal-to-Noise Ratio).
+ * - Gateway location data.
+ *
+ * This information allows analysis of both the rainwater
+ * buffering system and the performance of the LoRaWAN
+ * communication network.
+ *
+ * @see UseCase
+ * @see ApplicationArchitecture
+ */
