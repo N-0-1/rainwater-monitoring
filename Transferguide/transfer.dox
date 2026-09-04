@@ -1,0 +1,245 @@
+/**
+ * @page TransferGuide Transfer and Further Development Guide
+ *
+ * @brief Technical documentation for rebuilding and extending the
+ * rainwater monitoring prototype.
+ *
+ * This document describes all steps required to rebuild, deploy,
+ * maintain and further develop the rainwater monitoring system.
+ *
+ *
+ * @section SystemOverview System Overview
+ *
+ * The prototype consists of the following components:
+ *
+ * - HAN IoT Node
+ * - LoRaWAN network (The Things Stack)
+ * - Node-RED integration
+ * - MariaDB database
+ * - Grafana dashboard
+ *
+ * Sensor data is collected by the LoRaWAN node, transmitted through
+ * The Things Stack, processed by Node-RED and stored in a MariaDB
+ * database. Grafana is used to visualize the collected data.
+ *
+ *
+ * @section RepositoryStructure Repository Structure
+ *
+ * The project consists of the following repositories:
+ *
+ * - LoRaWAN Node Application
+ * - Payload Encoder / Decoder
+ * - Database Scripts
+ * - Node-RED Flows
+ * - Grafana Dashboard Configuration
+ *
+ *
+ * @section HardwareSetup Hardware Setup
+ *
+ * Required hardware:
+ *
+ * - HAN IoT Node shield
+ * - LoRaWAN gateway
+ * - USB programming cable
+ *
+ * Prototype sensor mapping:
+ *
+ * - Red push button     -> Flow meter
+ * - White potentiometer -> Water level sensor
+ * - Red potentiometer   -> Battery voltage sensor
+ *
+ *
+ * @section SoftwareSetup Software Setup
+ *
+ * Required software:
+ *
+ * - Arduino IDE
+ * - HAN IoT Node libraries
+ * - The Things Stack account
+ * - Node-RED
+ * - MariaDB
+ * - Grafana
+ *
+ *
+ * @section LoRaWANNodeSetup LoRaWAN Node Setup
+ *
+ * 1. Open the LoRaWAN node project in Arduino IDE.
+ * 2. Configure OTAA credentials in:
+ *
+ * @code
+ * ThingsNetworkConfig.h
+ * @endcode
+ *
+ * 3. Compile the project.
+ * 4. Upload the firmware to the HAN IoT Node.
+ * 5. Verify successful OTAA join through the serial monitor.
+ *
+ *
+ * @section PayloadFormat Payload Format
+ *
+ * The payload format is shared by the encoder, decoder and
+ * TTN payload formatter.
+ *
+ * @verbatim
+ *
+ * +------------+-------------+------------------+
+ * | Flow Meter | Level Meter | Battery Voltage  |
+ * +------------+-------------+------------------+
+ * | 1 byte     | 2 bytes     | 4 bytes          |
+ * +------------+-------------+------------------+
+ *
+ * @endverbatim
+ *
+ * Total payload size:
+ *
+ * @code
+ * 7 bytes
+ * @endcode
+ *
+ *
+ * @section TTNConfiguration The Things Stack Configuration
+ *
+ * 1. Create an application.
+ * 2. Register the end device.
+ * 3. Configure OTAA activation.
+ * 4. Configure the JavaScript payload formatter.
+ * 5. Enable MQTT integration.
+ * 6. Verify successful uplink reception.
+ *
+ *
+ * @section NodeREDSetup Node-RED Configuration
+ *
+ * The Node-RED flow consists of:
+ *
+ * - TTN MQTT input
+ * - TTN message unifier
+ * - Payload pre-processing
+ * - Database insertion
+ * - Dashboard and visualization integrations
+ *
+ * The pre-processing function performs:
+ *
+ * - Payload extraction
+ * - Timestamp generation
+ * - Device identification
+ * - Gateway metadata extraction
+ *
+ *
+ * @section DatabaseSetup Database Setup
+ *
+ * Create the database:
+ *
+ * @code
+ * raintankNetwork
+ * @endcode
+ *
+ * Execute:
+ *
+ * @code
+ * raintankNetwork.sql
+ * @endcode
+ *
+ * to create all required tables.
+ *
+ * Tables:
+ *
+ * - device
+ * - measurement
+ * - radio_metadata
+ *
+ *
+ * @section GrafanaSetup Grafana Configuration
+ *
+ * 1. Create a MariaDB data source.
+ * 2. Connect to database:
+ *
+ * @code
+ * raintankNetwork
+ * @endcode
+ *
+ * 3. Create dashboards for:
+ *
+ * - Water level
+ * - Water consumption
+ * - Battery voltage
+ * - RSSI
+ * - SNR
+ *
+ * Use the measurement timestamp:
+ *
+ * @code
+ * uplink_at
+ * @endcode
+ *
+ * as the Grafana time field.
+ *
+ *
+ * @section Verification Verification Procedure
+ *
+ * Verify system operation using the following procedure:
+ *
+ * 1. Power the node.
+ * 2. Verify OTAA join.
+ * 3. Modify potentiometer values.
+ * 4. Press the flow meter button.
+ * 5. Verify uplinks in TTN.
+ * 6. Verify database records.
+ * 7. Verify Grafana visualizations.
+ *
+ *
+ * @section FutureDevelopment Future Development
+ *
+ * Future improvements may be implemented in the following areas:
+ *
+ * Hardware:
+ * - Physical water level sensor
+ * - Physical flow sensor
+ * - Temperature sensor
+ * - Battery powered deployment
+ *
+ * LoRaWAN:
+ * - Downlink support
+ * - Remote configuration
+ *
+ * Software:
+ * - Additional payload fields
+ * - Alarm generation
+ * - Historical reporting
+ *
+ * Database:
+ * - Device management
+ * - Gateway management
+ * - Statistical analysis
+ *
+ * Dashboard:
+ * - Consumption reports
+ * - Monthly statistics
+ * - Predictive maintenance indicators
+ *
+ *
+ * @section Troubleshooting Troubleshooting
+ *
+ * No TTN uplinks:
+ * - Verify OTAA credentials.
+ * - Verify gateway coverage.
+ *
+ * No database records:
+ * - Verify MQTT connection.
+ * - Verify Node-RED flow status.
+ * - Verify database credentials.
+ *
+ * No Grafana data:
+ * - Verify MariaDB datasource configuration.
+ * - Verify SQL queries.
+ * - Verify timestamp field selection.
+ *
+ *
+ * @section References References
+ *
+ * See also:
+ * - @ref UseCase
+ * - @ref ShieldLayout
+ * - @ref ApplicationArchitecture
+ * - @ref PayloadCodec
+ * - @ref DatabaseDesign
+ */
