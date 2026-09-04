@@ -1,0 +1,116 @@
+/**
+ * @page HanNodeDeviceLibrary HAN IoT Shield Support Library
+ *
+ * @brief Hardware abstraction layer for the HAN IoT prototype shield.
+ *
+ * This library provides a hardware abstraction layer for the
+ * HAN IoT prototype shield used during development of the
+ * rainwater monitoring prototype.
+ *
+ * 
+ * The library isolates all shield-specific pin assignments,
+ * input handling and LED control functionality from the
+ * application logic. As a result, the application code can
+ * access shield resources through a simple and consistent
+ * interface without depending on physical pin numbers.
+ *
+ *
+ * @section Purpose Purpose
+ *
+ * The library has two main responsibilities:
+ *
+ * - Initializing the hardware available on the prototype shield.
+ * - Reading user inputs and controlling visual feedback LEDs.
+ *
+ * The library therefore acts as the interface between the
+ * application software and the development hardware.
+ *
+ *
+ * @section ShieldResources Supported Shield Resources
+ *
+ * The library provides access to:
+ *
+ * - Four LEDs.
+ * - Two push buttons.
+ * - Two potentiometers.
+ * - A OneWire interface for Dallas temperature sensors.
+ *
+ * During prototype development the potentiometers and push
+ * buttons are used to emulate physical sensors.
+ *
+ * @section Calling Calling the library
+ *
+ * @code
+ * #include "hanNodeDevice.h"
+ * @endcode
+ *
+ * The library's files are parts of the prototype LoraWAN Node application
+ *
+ *
+ * @section Initialization Hardware Initialization
+ *
+ * The function:
+ *
+ * @code
+ * initializeNodeHardware()
+ * @endcode
+ *
+ * configures all required GPIO pins and prepares the
+ * prototype shield for operation.
+ *
+ *
+ * @section RuntimeOperation Runtime Operation
+ *
+ * During normal operation the application periodically calls:
+ *
+ * @code
+ * ledsControl()
+ * @endcode
+ *
+ * This function:
+ *
+ * - Reads the state of the push buttons.
+ * - Reads the potentiometer values.
+ * - Updates the LED brightness.
+ * - Updates globally available hardware status variables.
+ *
+ *
+ * @section RelationToPrototype Relation to the Prototype
+ *
+ * The rainwater monitoring application uses this library for:
+ *
+ * - Flow meter pulse simulation through the red push button.
+ * - Battery voltage simulation through the red potentiometer.
+ * - Water level simulation through the white potentiometer.
+ * - User feedback through the shield LEDs.
+ *
+ *
+ * @section HANIoTLibrary HAN IoT Shield Library
+ *
+ * An alternative to this support library is the HAN IoT Shield
+ * library designed by Remko Welling, which can be installed through the
+ * <b>Library Manager</b> in the Arduino IDE.
+ *
+ * The HAN IoT Shield library provides a higher-level interface
+ * to the hardware available on the prototype shield, including:
+ *
+ * - LEDs
+ * - Push buttons
+ * - Potentiometers
+ * - Dallas temperature sensor support
+ *
+ * Using the HAN IoT Shield library simplifies application
+ * development by providing easy access to shield functionality
+ * without requiring direct manipulation of GPIO pins.
+ *
+ * The support library described on this page was developed to
+ * provide a lightweight hardware abstraction layer tailored to
+ * the requirements of this project. Future developments may
+ * choose either approach depending on the desired level of
+ * abstraction and functionality.
+ *
+ *
+ *
+ * @see ShieldLayout
+ * @see ApplicationArchitecture
+ */

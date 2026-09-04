@@ -1,0 +1,45 @@
+/**
+ * @page UseCase Rainwater Buffering Use Case
+ *
+ * @brief Monitoring household rainwater storage in the Municipality of Apeldoorn.
+ *
+ * @section Background Background
+ *
+ * Due to climate change, periods of drought are increasingly
+ * alternating with heavy rainfall. During intense rain showers,
+ * large amounts of water enter the sewer system, which can lead
+ * to flooding and damage. To reduce this pressure, the Municipality
+ * of Apeldoorn encourages residents to disconnect roof drainage
+ * from the sewer and collect rainwater locally.
+ *
+ * @section Goal Goal
+ *
+ * The municipality would like to determine the effectiveness of
+ * disconnecting roof drainage from the sewer system by measuring:
+ *
+ * - How much rainwater is stored.
+ * - How much water is used.
+ * - Over what period the stored water is returned to the environment.
+ *
+ * @section Solution Solution
+ *
+ * This project implements a LoRaWAN-based monitoring node for a
+ * rainwater barrel. The node measures:
+ *
+ * - Water level.
+ * - Water consumption.
+ * - Battery condition.
+ *
+ * The measurements are transmitted through the LoRaWAN network
+ * for further analysis.
+ *
+ * @section Prototype Prototype
+ *
+ * During development, physical sensors are emulated using
+ * potentiometers and a push button. This allows the complete
+ * measurement and communication chain to be validated before
+ * deploying real sensors.
+ *
+ * @see ShieldLayout
+ * @see ApplicationArchitecture
+ */

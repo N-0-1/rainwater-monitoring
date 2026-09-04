@@ -1,0 +1,182 @@
+/**
+ * @page ApplicationArchitecture Application Architecture
+ *
+ * @brief Overview of the software and communication architecture.
+ *
+ * This page describes the interaction between the sensor module,
+ * payload encoder, LoRaWAN communication module and The Things Stack.
+ *
+ * @section DesignChoices Design Choices
+ *
+ * @subsection PrototypeDesign Prototype Design Choices
+ *
+ * The prototype was designed to validate the complete LoRaWAN
+ * communication chain before integrating physical sensors.
+ *
+ * The following design choices were made:
+ *
+ * - The HAN IoT Node was selected because it integrates the
+ *   required microcontroller and LoRaWAN transceiver.
+ *
+ * - OTAA activation was selected because it provides improved
+ *   security compared to ABP activation.
+ *
+ * - Potentiometers and push buttons were used instead of
+ *   physical sensors to simplify testing and enable repeatable
+ *   demonstrations.
+ *
+ * - A payload encoder is used to minimize payload size and
+ *   airtime consumption.
+ *
+ *
+ * @subsection FunctionalArchitecture Functional Architecture
+ *
+ * Figure 1 illustrates the interaction between the sensor module,
+ * payload encoder, communication module and the main application.
+ *
+ * The main application collects sensor data, forwards the data
+ * to the payload encoder and initiates LoRaWAN transmission.
+ *
+ * @dot "Functional Architecture"
+ * digraph RainBarrelNode
+ * {
+ *   rankdir=LR;
+ *
+ *   Flow     [label="Flow Meter"];
+ *   Level    [label="Level Meter"];
+ *   Battery  [label="Battery Voltage"];
+ *
+ *   Sensors  [label="Sensor Module"];
+ *
+ *   MainLoop [label="Main Application\nloop()"];
+ *
+ *   Encoder  [label="Payload Encoder"];
+ *
+ *   TTN      [label="TTN Module"];
+ *
+ *   Gateway  [label="LoRaWAN Gateway"];
+ *
+ *   Flow -> Sensors;
+ *   Level -> Sensors;
+ *   Battery -> Sensors;
+ *
+ *   Sensors -> MainLoop;
+ *
+ *   MainLoop -> Encoder;
+ *   Encoder -> TTN;
+ *   TTN -> Gateway;
+ * }
+ * @enddot
+ *
+ *
+ *
+ * @subsection LoRaWANArchitecture LoRaWAN Communication Architecture
+ *
+ * Figure 2 shows the communication path between the prototype
+ * node and the end user through the LoRaWAN infrastructure.
+ *
+ * @dot "LoRaWAN Communication Architecture"
+ * digraph LoRaWANSystem
+ * {
+ *   rankdir=LR;
+ *
+ *   Sensors [label="Sensor Module"];
+ *   Encoder [label="Payload Encoder"];
+ *   Node    [label="LoRaWAN Node"];
+ *   Gateway [label="LoRaWAN Gateway"];
+ *   TTN     [label="The Things Stack"];
+ *   User    [label="Private Home Owner"];
+ *
+ *   Sensors -> Encoder;
+ *   Encoder -> Node;
+ *   Node -> Gateway;
+ *   Gateway -> TTN;
+ *   TTN -> User;
+ * }
+ * @enddot
+ *
+ *
+ *
+ *
+ * @section CommunicationDesign Communication Design
+ *
+ * @subsection TransmissionInterval Transmission Interval Selection
+ * 
+ * @note The calculations below are based on the LoRaWAN Airtime Calculator
+ * and metadata collected from the prototype during testing.
+ *
+ * The uplink interval is configured to 5 minutes. This value was
+ * selected based on the LoRaWAN airtime requirements of the device,
+ * regulatory duty-cycle limitations in the EU868 frequency band,
+ * and The Things Network Fair Access Policy.
+ *
+ * The prototype transmits a payload of 7 bytes. Including the LoRaWAN
+ * protocol overhead (approximately 13 bytes), the resulting packet
+ * occupies an airtime of approximately 102.9 ms when transmitted using
+ * Data Rate 4 (DR4), corresponding to Spreading Factor 8 (SF8) and
+ * a bandwidth of 125 kHz.
+ *
+ * Under the EU868 1% duty-cycle limitation, a transmission with an
+ * airtime of 102.9 ms requires a silent period of approximately
+ * 10.3 seconds before another transmission may occur. In theory this
+ * would allow up to 349 messages per hour.
+ *
+ * However, The Things Network applies a Fair Access Policy that limits
+ * the average airtime consumption of an end device. For the selected
+ * transmission parameters, this corresponds to approximately:
+ * - 12 uplink messages per hour
+ * - 291 uplink messages per day
+ * - approximately 4.9 minutes between consecutive uplinks
+ *
+ * Based on these constraints, a reporting interval of 5 minutes was
+ * selected. This interval complies with network usage guidelines while
+ * still providing timely information about the state of the rainwater
+ * buffering system.
+ *
+ * The monitored parameters, water level and battery voltage, change
+ * relatively slowly and therefore do not require high-frequency
+ * reporting. In addition to the periodic transmission interval,
+ * event-driven uplinks are generated when:
+ *
+ * - The battery voltage reaches 4.0 V (400 cV).
+ * - The water level reaches 145 cm.
+ *
+ * This hybrid strategy combines scheduled monitoring with immediate
+ * notification of significant events, ensuring efficient network usage
+ * while maintaining awareness of critical operating conditions.
+ *
+ *
+ *
+ * @subsection DecisionLogic Transmission Decision Logic
+ *
+ * @dot
+ * digraph DecisionFlow
+ * {
+ *   rankdir=TB;
+ *
+ *   Start   [shape=ellipse,label="Read Sensors"];
+ *
+ *   Battery [shape=diamond,label="battery_cV == 400?"];
+ *   Level   [shape=diamond,label="level_cM == 145?"];
+ *   Timer   [shape=diamond,label="5 minutes elapsed?"];
+ *
+ *   Send    [shape=box,label="Build and Send Uplink"];
+ *   Wait    [shape=box,label="Continue Monitoring"];
+ *
+ *   Start -> Battery;
+ *
+ *   Battery -> Send [label="Yes"];
+ *   Battery -> Level [label="No"];
+ *
+ *   Level -> Send [label="Yes"];
+ *   Level -> Timer [label="No"];
+ *
+ *   Timer -> Send [label="Yes"];
+ *   Timer -> Wait [label="No"];
+ * }
+ * @enddot
+ *
+ *
+ * @see ShieldLayout
+ *
+ */

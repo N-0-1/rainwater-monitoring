@@ -1,0 +1,65 @@
+ /**
+ * @page ShieldLayout Shield Layout
+ *
+ * @brief Physical layout of the prototype shield.
+ * 
+ * @verbatim
+   +-----------------------------+
+   | [gr-1] [gr-2] [gr-2] [gr-2] | <- 4 grove connectors
+   |                             |
+   |   +--------+   +--------+   |
+   |   |        |   |        |   |
+   |   |   P1   |   |   P2   |   |  <- 2 potentiometers, P1 Battery Voltage, P2 Level Meter
+   |   |        |   |        |   |
+   |   +--------+   +--------+   |
+   |                             |
+   |     +----+       +----+     |
+   |     |Red |       |Blck|     |  <- 2 push button switches, Red Flow Meter
+   |     +----+       +----+     |
+   |                             |
+   | [led1] [led3] [led2] [led4] |  <- 4 LEDs, led1 feedback on Red push button, led3 on P1, led4 on P2
+   |                             |
+   | [Dallas]                    |  <- Dallas one-wire temperature sensor
+   +-\                 /---------+
+      \---------------/
+ * @endverbatim
+ *
+ *
+ * @section SensorSelection Sensor Selection Justification
+ *
+ * The LoRaWAN node is designed for a rainwater buffering application
+ * intended for private households. Rain barrels are commonly used to
+ * collect and store rainwater for non-potable purposes such as garden
+ * irrigation, reducing the consumption of treated drinking water and
+ * mitigating stormwater runoff.
+ *
+ * The selected sensors support the key monitoring requirements of this
+ * use case:
+ *
+ * - Flow Meter
+ *   Measures the amount of water withdrawn from the rain barrel.
+ *   This information provides insight into water consumption patterns
+ *   and enables users to estimate water savings achieved through the
+ *   use of harvested rainwater.
+ *
+ * - Water Level Sensor
+ *   Measures the current fill level of the rain barrel. This is the
+ *   primary operational parameter of the system, allowing users to
+ *   determine the available water volume and identify periods of low
+ *   or high storage capacity.
+ *
+ * - Battery Voltage Sensor
+ *   Monitors the energy source of the LoRaWAN node. Since the device
+ *   may be installed outdoors and operate autonomously for extended
+ *   periods, battery condition information is essential for reliable
+ *   operation and predictive maintenance.
+ *
+ * During prototype development, the physical sensors are emulated
+ * using push buttons and potentiometers on the shield. This approach
+ * enables validation of the acquisition software, payload encoding,
+ * and LoRaWAN communication without requiring the final sensor
+ * hardware.
+ *
+ *
+ * @see ApplicationArchitecture.
+ */

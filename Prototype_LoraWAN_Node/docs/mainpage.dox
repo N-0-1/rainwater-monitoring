@@ -1,0 +1,124 @@
+/**
+ * @mainpage Rainwater Monitoring LoRaWAN Node
+ *
+ * @subpage SystemDocumentation
+ *
+ *
+ *
+ * @section Purpose Project Purpose
+ *
+ * The purpose of this prototype is to evaluate LoRaWAN as a
+ * communication technology for monitoring rainwater buffering
+ * systems used by private households.
+ *
+ * By monitoring stored rainwater, homeowners can:
+ * - Estimate available water reserves.
+ * - Track water consumption.
+ * - Detect maintenance requirements.
+ * - Optimize the use of harvested rainwater.
+ *
+ * @section MeasuredParameters Measured Parameters
+ *
+ * The prototype monitors three parameters:
+ *
+ * - Water level in the rain barrel.
+ * - Water consumption through a simulated flow meter.
+ * - Battery condition of the monitoring device.
+ *
+ *
+ * @section NodeOperation Node Operation
+ *
+ * After power-up, the node initializes the hardware platform
+ * and joins The Things Network using OTAA.
+ *
+ * During normal operation the node executes the following cycle:
+ *
+ * 1. Read all simulated sensors.
+ * 2. Update indicator LEDs.
+ * 3. Display diagnostic information.
+ * 4. Evaluate transmission conditions.
+ * 5. Build a payload when transmission is required.
+ * 6. Send the payload through LoRaWAN.
+ * 7. Continue monitoring.
+ *
+ * This cycle repeats continuously throughout the lifetime of
+ * the application.
+ *
+ *
+ * @section Hardware Hardware Components
+ *
+ * - HAN IoT Node
+ * - LoRaWAN transceiver
+ * - Prototype shield
+ * - Two potentiometers
+ * - One push button
+ * - LEDs for visual feedback
+ *
+ *
+ * @section SensorEmulation Sensor Emulation Method
+ *
+ * Physical sensors were not available during prototype
+ * development. Therefore sensor behavior is emulated using
+ * components available on the prototype shield.
+ *
+ * - The red push button emulates a flow meter pulse output.
+ *   Each button press generates one pulse and increments
+ *   the flow counter.
+ *
+ * - Potentiometer P1 emulates battery voltage.
+ *   The analog input value is converted into a voltage
+ *   between 0 and 5 V.
+ *
+ * - Potentiometer P2 emulates water level.
+ *   The analog input value is scaled to represent a water
+ *   level between 0 and 1.5 meters.
+ *
+ * This approach enables controlled testing of the software,
+ * payload encoding and LoRaWAN communication functionality.
+ *
+ *
+ *
+ * @section Communication Communication Strategy
+ *
+ * Sensor values are periodically transmitted to
+ * The Things Network (TTN) using LoRaWAN OTAA activation.
+ *
+ * Uplink transmissions occur:
+ * - Every 5 minutes.
+ * - When battery voltage reaches 4.0 V.
+ * - When water level reaches 145 cm.
+ *
+ *
+ * @section TestProcedure Prototype Demonstration
+ *
+ * The prototype is demonstrated using the controls available
+ * on the shield.
+ *
+ * The demonstration procedure is:
+ *
+ * 1. Power the node and join The Things Network.
+ * 2. Rotate potentiometer P2 to simulate changes in water level.
+ * 3. Rotate potentiometer P1 to simulate battery voltage.
+ * 4. Press the red push button to generate flow meter pulses.
+ * 5. Observe sensor values on the serial monitor.
+ * 6. Observe uplink messages in The Things Stack console.
+ *
+ * This demonstration verifies the complete chain from sensor
+ * acquisition through payload encoding to LoRaWAN transmission.
+ *
+ *
+ *
+ * @section FutureWork Future Improvements
+ *
+ * - Replace simulated sensors with physical sensors.
+ * - Add temperature monitoring for frost detection.
+ * - Support remote configuration through LoRaWAN downlinks.
+ * - Implement battery-powered operation with power-saving modes.
+ * - Using the HAN IoT Shield library designed by Remko Welling
+ *
+ *
+ * Additional information can be found in:
+ * @see ShieldLayout
+ * @see ApplicationArchitecture
+ *
+ */
