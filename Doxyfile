@@ -1102,7 +1102,9 @@ EXCLUDE                += \
 						 Prototype_LoraWAN_Node/RegentonMeter/payloadDefinitions.h \
 						 Prototype_LoraWAN_Node/RegentonMeter/hanNodeDevice.h \
 				         Prototype_LoraWAN_Node/RegentonMeter/hanNodeDevice.cpp \
-						 MyPayloadEncoderDecoder/CHANGELOG.md
+						 MyPayloadEncoderDecoder/CHANGELOG.md \
+						 MyPayloadEncoderDecoder/Payload_Class_Diagram.md \
+						 Database/ClassDiagram.md
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
